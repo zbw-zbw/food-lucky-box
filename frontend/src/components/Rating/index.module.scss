@@ -1,0 +1,25 @@
+.rating {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.star {
+  display: flex;
+  align-items: center;
+  position: relative;
+  width: 16px;
+  height: 16px;
+
+  > * {
+    position: absolute;
+    left: 0;
+    top: 0;
+  }
+}
+
+.score {
+  margin-left: 6px;
+  font-size: 14px;
+  color: #666;
+}

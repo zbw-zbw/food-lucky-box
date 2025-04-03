@@ -1,0 +1,166 @@
+.container {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+  display: flex;
+  flex-direction: column;
+  
+  :global {
+    .adm-nav-bar {
+      background-color: #fff;
+      border-bottom: 1px solid #f0f0f0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+  }
+}
+
+.content {
+  flex: 1;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.resultCard {
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.restaurantInfo {
+  padding: 16px;
+
+  .header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 16px;
+
+    .titleWrapper {
+      flex: 1;
+      margin-right: 12px;
+
+      h2 {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 600;
+        color: #333;
+      }
+
+      .cost {
+        display: inline-block;
+        margin-top: 8px;
+        padding: 2px 8px;
+        font-size: 14px;
+        color: #ff4d4f;
+        background: #fff1f0;
+        border-radius: 10px;
+      }
+    }
+  }
+}
+
+.favoriteButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+  
+  &:active {
+    background-color: #f5f5f5;
+  }
+}
+
+.photos {
+  margin: 0 -16px;
+  background: #f5f5f5;
+
+  :global {
+    .adm-swiper {
+      --height: 240px;
+    }
+  }
+}
+
+.photoItem {
+  width: 100%;
+  height: 240px;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.details {
+  margin-top: 16px;
+
+  .row {
+    display: flex;
+    align-items: flex-start;
+    margin: 12px 0;
+    line-height: 1.5;
+    font-size: 14px;
+  }
+
+  .label {
+    flex-shrink: 0;
+    width: 56px;
+    color: #999;
+  }
+
+  .value {
+    flex: 1;
+    color: #333;
+  }
+
+  .telTags {
+    :global {
+      .tag {
+        background: #e6f4ff;
+        color: #1677ff;
+        font-family: monospace;
+        letter-spacing: 0.5px;
+      }
+    }
+  }
+}
+
+.actions {
+  margin-top: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  :global {
+    .adm-button {
+      height: 44px;
+      font-size: 16px;
+      border-radius: 22px;
+
+      &-primary {
+        background: #1677ff;
+        border-color: #1677ff;
+      }
+    }
+  }
+}
+
+.favoriteActions {
+  display: flex;
+  gap: 12px;
+
+  .prevButton,
+  .nextButton {
+    flex: 1;
+  }
+}

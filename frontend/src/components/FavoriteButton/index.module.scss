@@ -1,0 +1,28 @@
+.iconButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: opacity 0.2s;
+
+  &:active {
+    opacity: 0.7;
+  }
+}
+
+.button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 44px;
+  font-size: 16px;
+  border-radius: 22px;
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  color: #333;
+
+  &:active {
+    opacity: 0.8;
+  }
+}
