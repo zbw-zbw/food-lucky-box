@@ -1,9 +1,10 @@
 .container {
   min-height: 100vh;
+  height: 100vh;
   background-color: #f5f5f5;
   display: flex;
   flex-direction: column;
-  padding-bottom: calc(120px + env(safe-area-inset-bottom)); // 增加底部间距
+  position: relative;
 }
 
 .loading {
@@ -18,28 +19,95 @@
 }
 
 .header {
-  position: sticky;
-  top: 0;
-  z-index: 99;
-  padding: 16px;
-  background: linear-gradient(to bottom, #fff 0%, #fff 90%, rgba(255, 255, 255, 0.9) 100%);
-  backdrop-filter: blur(8px);
+  position: relative;
+  padding: 20px;
   text-align: center;
-  border-bottom: 1px solid #f0f0f0;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.8));
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
 
   h1 {
     margin: 0;
-    font-size: 28px;
-    font-weight: 700;
+    font-size: 24px;
+    font-weight: bold;
     color: #333;
-    letter-spacing: 1px;
   }
 
   p {
     margin: 8px 0 0;
     font-size: 14px;
     color: #666;
-    letter-spacing: 0.5px;
+  }
+
+  .filterButton {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    padding: 8px;
+    color: #666;
+    cursor: pointer;
+    transition: color 0.3s;
+
+    &:hover {
+      color: #333;
+    }
+  }
+}
+
+.searchBar {
+  padding: 12px 16px;
+  background: #fff;
+  border-bottom: 1px solid #f5f5f5;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  .searchInput {
+    flex: 1;
+
+    input {
+      width: 100%;
+      height: 36px;
+      padding: 0 12px;
+      border: 1px solid #e5e5e5;
+      border-radius: 18px;
+      background: #f5f5f5;
+      font-size: 14px;
+      color: #333;
+      transition: all 0.3s;
+
+      &::placeholder {
+        color: #999;
+      }
+
+      &:focus {
+        outline: none;
+        border-color: #1677ff;
+        background: #fff;
+      }
+    }
+  }
+
+  .searchFilter {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #666;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s;
+
+    &:hover {
+      background: #f5f5f5;
+      color: #333;
+    }
+
+    &:active {
+      background: #e5e5e5;
+    }
   }
 }
 
@@ -47,26 +115,27 @@
   flex: 1;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .listWrapper {
   flex: 1;
   overflow: auto;
   -webkit-overflow-scrolling: touch;
-  padding-bottom: 16px; // 添加列表底部间距
+  padding-bottom: calc(180px + env(safe-area-inset-bottom)); // 增加底部间距，确保内容不被遮挡
 }
 
 .list {
   background: #fff;
-  
+
   :global {
     .adm-list-item {
       padding: 12px 16px;
-      
+
       .adm-list-item-content {
         border-bottom: 1px solid #f5f5f5;
       }
-      
+
       .adm-list-item-content-main {
         padding-right: 0;
       }
@@ -74,6 +143,29 @@
       &:active {
         background-color: #f9f9f9;
       }
+    }
+  }
+}
+
+.emptyState {
+  padding: 40px 20px;
+  text-align: center;
+  color: #999;
+
+  .emptyIcon {
+    font-size: 48px;
+    margin-bottom: 16px;
+  }
+
+  p {
+    margin: 0 0 20px;
+    font-size: 14px;
+  }
+
+  :global {
+    .adm-button {
+      display: inline-block;
+      min-width: 120px;
     }
   }
 }
@@ -89,27 +181,13 @@
   background-color: #f9f9f9;
   position: relative;
 
-  &::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 24px;
-    height: 24px;
-    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23ccc"><path d="M11 5V16.17L6.11997 11.29C5.72997 10.9 5.08997 10.9 4.69997 11.29C4.30997 11.68 4.30997 12.31 4.69997 12.7L11.29 19.29C11.68 19.68 12.31 19.68 12.7 19.29L19.29 12.7C19.68 12.31 19.68 11.68 19.29 11.29C18.9 10.9 18.27 10.9 17.88 11.29L13 16.17V5C13 4.45 12.55 4 12 4C11.45 4 11 4.45 11 5Z"/></svg>');
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: contain;
-    opacity: 0.3;
-  }
-
   img {
     width: 100%;
     height: 100%;
     object-fit: cover;
 
-    &[src=""], &:not([src]) {
+    &[src=''],
+    &:not([src]) {
       opacity: 0;
     }
   }
@@ -136,13 +214,29 @@
   left: 0;
   right: 0;
   bottom: 0;
-  padding: 16px 16px calc(24px + env(safe-area-inset-bottom)); // 增加底部安全区域间距
+  padding: 16px;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom));
   background: #fff;
   box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.06);
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
   z-index: 100;
+
+  .footerContent {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 12px;
+
+    .filterButton {
+      flex: 1;
+    }
+
+    .randomButton {
+      flex: 2;
+    }
+  }
+
+  .favoriteButton {
+    width: 100%;
+  }
 
   :global {
     .adm-button {
@@ -156,4 +250,80 @@
       }
     }
   }
-} 
+}
+
+.filterContainer {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+
+  .filterScroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .filterSection {
+    margin-bottom: 24px;
+
+    h3 {
+      margin: 0 0 12px;
+      font-size: 16px;
+      font-weight: bold;
+      color: #333;
+    }
+
+    :global {
+      .adm-tag {
+        margin: 0 8px 8px 0;
+        font-size: 14px;
+        padding: 6px 12px;
+        border-radius: 4px;
+
+        &-primary {
+          color: #1677ff;
+          background: #e6f4ff;
+          border-color: #1677ff;
+        }
+      }
+
+      .adm-radio {
+        --font-size: 14px;
+        --gap: 8px;
+        padding: 12px 0;
+        border-bottom: 1px solid #f5f5f5;
+
+        &:last-child {
+          border-bottom: none;
+        }
+
+        &-content {
+          color: #333;
+        }
+
+        &-checked {
+          .adm-radio-content {
+            color: #1677ff;
+            font-weight: 500;
+          }
+        }
+      }
+
+      .adm-space-block {
+        width: 100%;
+      }
+    }
+  }
+
+  .filterActions {
+    padding: 16px;
+    padding-bottom: calc(16px + env(safe-area-inset-bottom));
+    border-top: 1px solid #f5f5f5;
+    background: #fff;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+}

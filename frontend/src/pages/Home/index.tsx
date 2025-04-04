@@ -1,6 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Button, List, InfiniteScroll, DotLoading } from 'antd-mobile';
-import { HeartOutline } from 'antd-mobile-icons';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
+import { Button, List, InfiniteScroll, DotLoading, PullToRefresh, Popup, Radio, Space, Tag } from 'antd-mobile';
+import { HeartOutline, FilterOutline } from 'antd-mobile-icons';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../hooks/useApp';
 import { mapService } from '../../utils/map';
@@ -11,8 +11,48 @@ import {
   setSelectedRestaurant,
   setLoading,
 } from '../../store';
-import { Restaurant } from '../../utils/map';
+import { Restaurant, Location as MapLocation } from '../../utils/map';
 import styles from './index.module.scss';
+import Image from '../../components/Image';
+import { debounce } from 'lodash';
+
+interface FilterOptions {
+  type: string[];
+  priceRange: string;
+  rating: string;
+  sortBy: string;
+}
+
+const CUISINE_TYPES = [
+  { label: '全部', value: 'all' },
+  { label: '中餐', value: 'chinese' },
+  { label: '日料', value: 'japanese' },
+  { label: '韩餐', value: 'korean' },
+  { label: '西餐', value: 'western' },
+  { label: '东南亚', value: 'southeast_asian' },
+  { label: '快餐', value: 'fast_food' },
+];
+
+const PRICE_RANGES = [
+  { label: '全部', value: 'all' },
+  { label: '¥0-50', value: '0-50' },
+  { label: '¥50-100', value: '50-100' },
+  { label: '¥100-200', value: '100-200' },
+  { label: '¥200+', value: '200+' },
+];
+
+const RATING_OPTIONS = [
+  { label: '全部', value: 'all' },
+  { label: '4.5分以上', value: '4.5' },
+  { label: '4分以上', value: '4.0' },
+  { label: '3.5分以上', value: '3.5' },
+];
+
+const SORT_OPTIONS = [
+  { label: '综合排序', value: 'default' },
+  { label: '距离最近', value: 'distance' },
+  { label: '评分最高', value: 'rating' },
+];
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
@@ -21,13 +61,147 @@ const Home: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const initRef = useRef(false);
+  const locationRef = useRef(location);
+  const [showFilter, setShowFilter] = useState(false);
+  const [searchText, setSearchText] = useState('');
+  const [isInitializing, setIsInitializing] = useState(true);
+  const [isSearching, setIsSearching] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  
+  // 修改默认筛选状态，包含"全部"选项
+  const defaultFilters: FilterOptions = {
+    type: ['all'],
+    priceRange: 'all',
+    rating: 'all',
+    sortBy: 'default',
+  };
+  
+  const [filterOptions, setFilterOptions] = useState<FilterOptions>(defaultFilters);
+  const [tempFilterOptions, setTempFilterOptions] = useState<FilterOptions>(defaultFilters);
+  const [allRestaurants, setAllRestaurants] = useState<Restaurant[]>([]);
+  
+  // 防抖的搜索处理函数
+  const debouncedSearch = useRef(
+    debounce((value: string) => {
+      setSearchText(value);
+      setIsSearching(false);
+    }, 500)
+  ).current;
 
+  // 处理搜索输入
+  const handleSearchInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setIsSearching(true);
+    debouncedSearch(value);
+  };
+
+  // 使用 useMemo 缓存过滤结果
+  const filteredRestaurants = useMemo(() => {
+    let result = [...allRestaurants];
+
+    // 应用搜索过滤
+    if (searchText.trim()) {
+      const searchLower = searchText.toLowerCase().trim();
+      result = result.filter(restaurant => {
+        const name = restaurant.name.toLowerCase();
+        // 1. 直接匹配
+        if (name.includes(searchLower)) return true;
+        // 2. TODO: 添加拼音匹配支持
+        return false;
+      });
+    }
+
+    // 应用类型筛选
+    if (filterOptions.type.length > 0 && !filterOptions.type.includes('all')) {
+      result = result.filter(restaurant => 
+        filterOptions.type.some(type => 
+          restaurant.type?.toLowerCase().includes(type)
+        )
+      );
+    }
+
+    // 应用价格区间筛选
+    if (filterOptions.priceRange !== 'all') {
+      const [min, max] = filterOptions.priceRange.split('-').map(Number);
+      result = result.filter(restaurant => {
+        const cost = Number(restaurant.cost);
+        if (!cost) return false;
+        if (!max) return cost >= min;
+        return cost >= min && cost <= max;
+      });
+    }
+
+    // 应用评分筛选
+    if (filterOptions.rating !== 'all') {
+      const minRating = Number(filterOptions.rating);
+      result = result.filter(restaurant => 
+        restaurant.rating >= minRating
+      );
+    }
+
+    // 应用排序
+    switch (filterOptions.sortBy) {
+      case 'distance':
+        result.sort((a, b) => a.distance - b.distance);
+        break;
+      case 'rating':
+        result.sort((a, b) => b.rating - a.rating);
+        break;
+      default:
+        // 综合排序：评分 * 1000 / 距离
+        result.sort((a, b) => 
+          (b.rating * 1000 / b.distance) - (a.rating * 1000 / a.distance)
+        );
+    }
+
+    return result;
+  }, [allRestaurants, searchText, filterOptions]);
+
+  // 初始化时检查缓存
   useEffect(() => {
+    const cachedRestaurants = localStorage.getItem('restaurants');
+    const cachedLocation = localStorage.getItem('location');
+    const cachedTimestamp = localStorage.getItem('cacheTimestamp');
+
+    // 检查缓存是否在24小时内
+    const isCacheValid = cachedTimestamp && 
+      (Date.now() - parseInt(cachedTimestamp)) < 24 * 60 * 60 * 1000;
+
+    if (cachedRestaurants && cachedLocation && isCacheValid) {
+      try {
+        const parsedRestaurants = JSON.parse(cachedRestaurants);
+        const parsedLocation = JSON.parse(cachedLocation);
+        
+        // 使用缓存数据
+        dispatch(setRestaurants(parsedRestaurants));
+        dispatch(setLocation(parsedLocation));
+        setAllRestaurants(parsedRestaurants);
+        locationRef.current = parsedLocation;
+        setIsInitializing(false);
+      } catch {
+        // 缓存数据解析失败，清除缓存
+        localStorage.removeItem('restaurants');
+        localStorage.removeItem('location');
+        localStorage.removeItem('cacheTimestamp');
+      }
+    }
+
     if (!initRef.current) {
       initRef.current = true;
       initMap();
     }
   }, []);
+
+  // 更新缓存
+  const updateCache = (restaurants: Restaurant[], location: MapLocation) => {
+    try {
+      localStorage.setItem('restaurants', JSON.stringify(restaurants));
+      localStorage.setItem('location', JSON.stringify(location));
+      localStorage.setItem('cacheTimestamp', Date.now().toString());
+    } catch (error) {
+      console.warn('Failed to update cache:', error);
+    }
+  };
 
   const initMap = async () => {
     try {
@@ -37,6 +211,8 @@ const Home: React.FC = () => {
       Toast.show({
         content: '地图初始化失败',
       });
+    } finally {
+      setIsInitializing(false);
     }
   };
 
@@ -45,6 +221,8 @@ const Home: React.FC = () => {
       dispatch(setLoading(true));
       const location = await mapService.getCurrentLocation();
       dispatch(setLocation(location));
+      // 获取位置后立即加载餐厅数据
+      await loadRestaurants(1);
     } catch {
       Toast.show({
         content: '获取位置失败，请检查定位权限',
@@ -54,17 +232,17 @@ const Home: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    if (location) {
-      loadRestaurants(1);
-    }
-  }, [location]);
-
-  const loadRestaurants = async (page: number) => {
-    if (!location) return;
+  const loadRestaurants = async (page: number, isLoadingMore = false) => {
+    const currentLocation = locationRef.current;
+    if (!currentLocation) return;
     
     try {
-      const newRestaurants = await mapService.searchNearbyRestaurants(location, page);
+      // 只在非加载更多时设置全局 loading
+      if (!isLoadingMore) {
+        dispatch(setLoading(true));
+      }
+
+      const newRestaurants = await mapService.searchNearbyRestaurants(currentLocation, page);
       if (newRestaurants.length === 0) {
         setHasMore(false);
         return;
@@ -72,8 +250,15 @@ const Home: React.FC = () => {
       
       if (page === 1) {
         dispatch(setRestaurants(newRestaurants));
+        setAllRestaurants(newRestaurants);
+        // 更新缓存
+        updateCache(newRestaurants, currentLocation);
       } else {
-        dispatch(setRestaurants([...restaurants, ...newRestaurants]));
+        const updatedRestaurants = [...allRestaurants, ...newRestaurants];
+        dispatch(setRestaurants(updatedRestaurants));
+        setAllRestaurants(updatedRestaurants);
+        // 更新缓存
+        updateCache(updatedRestaurants, currentLocation);
       }
       setCurrentPage(page);
     } catch {
@@ -81,11 +266,25 @@ const Home: React.FC = () => {
         content: '获取餐厅列表失败',
       });
       setHasMore(false);
+    } finally {
+      if (!isLoadingMore) {
+        dispatch(setLoading(false));
+      }
     }
   };
 
+  const listWrapperRef = useRef<HTMLDivElement>(null);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+
   const loadMore = async () => {
-    await loadRestaurants(currentPage + 1);
+    if (isLoadingMore) return;
+    
+    try {
+      setIsLoadingMore(true);
+      await loadRestaurants(currentPage + 1, true);
+    } finally {
+      setIsLoadingMore(false);
+    }
   };
 
   const handleRestaurantClick = (restaurant: Restaurant) => {
@@ -112,12 +311,44 @@ const Home: React.FC = () => {
     navigate('/favorite');
   };
 
-  if (!location || loading) {
+  const handleRefresh = async () => {
+    setCurrentPage(1);
+    setHasMore(true);
+    await loadRestaurants(1, false);
+  };
+
+  const handleFilterConfirm = () => {
+    setFilterOptions(tempFilterOptions);
+    setShowFilter(false);
+  };
+
+  const handleFilterReset = () => {
+    setTempFilterOptions(defaultFilters);
+    if (!showFilter) {
+      // 如果是在主页面点击重置，直接应用重置
+      setFilterOptions(defaultFilters);
+      setSearchText('');
+    }
+  };
+
+  const handleShowFilter = () => {
+    setTempFilterOptions(filterOptions);
+    setShowFilter(true);
+  };
+
+  // 清理防抖函数
+  useEffect(() => {
+    return () => {
+      debouncedSearch.cancel();
+    };
+  }, [debouncedSearch]);
+
+  if (!location || (loading && !isSearching) || isInitializing) {
     return (
       <div className={styles.container}>
         <div className={styles.loading}>
           <DotLoading />
-          <span>定位中...</span>
+          <span>{!location ? '定位中...' : '加载中...'}</span>
         </div>
       </div>
     );
@@ -130,57 +361,214 @@ const Home: React.FC = () => {
         <p>让选择更简单</p>
       </div>
       <div className={styles.content}>
-        <div className={styles.listWrapper}>
-          <List className={styles.list}>
-            {restaurants.map((restaurant) => (
-              <List.Item
-                key={restaurant.id}
-                onClick={() => handleRestaurantClick(restaurant)}
-                prefix={
-                  <div className={styles.imageWrapper}>
-                    <img
-                      src={restaurant.photos?.[0]}
-                      alt={restaurant.name}
-                    />
-                  </div>
-                }
-                description={
-                  <div className={styles.description}>
-                    <span>{restaurant.type?.split(';')[0] || '暂无分类'}</span>
-                    <span>•</span>
-                    <span>{restaurant.rating ? `${restaurant.rating}分` : '暂无评分'}</span>
-                    {restaurant.cost && (
-                      <>
+        <div className={styles.searchBar}>
+          <div className={styles.searchInput}>
+            <input
+              ref={searchInputRef}
+              type="search"
+              placeholder="搜索餐厅名称"
+              defaultValue={searchText}
+              onChange={handleSearchInput}
+            />
+          </div>
+          <div className={styles.searchFilter} onClick={handleShowFilter}>
+            <FilterOutline fontSize={20} />
+          </div>
+        </div>
+        <div className={styles.listWrapper} ref={listWrapperRef}>
+          <PullToRefresh
+            onRefresh={handleRefresh}
+            renderText={(status) => {
+              return {
+                pulling: '下拉刷新',
+                canRelease: '释放立即刷新',
+                refreshing: '加载中...',
+                complete: '刷新成功',
+              }[status];
+            }}
+          >
+            <List className={styles.list}>
+              {allRestaurants.length === 0 ? (
+                <div className={styles.emptyState}>
+                  <div className={styles.emptyIcon}>🍽️</div>
+                  <p>正在搜索附近的餐厅...</p>
+                  <Button
+                    color="primary"
+                    onClick={() => loadRestaurants(1)}
+                  >
+                    重新加载
+                  </Button>
+                </div>
+              ) : filteredRestaurants.length > 0 ? (
+                filteredRestaurants.map((restaurant) => (
+                  <List.Item
+                    key={restaurant.id}
+                    onClick={() => handleRestaurantClick(restaurant)}
+                    prefix={
+                      <div className={styles.imageWrapper}>
+                        <Image
+                          src={restaurant.photos?.[0]}
+                          alt={restaurant.name}
+                          width={64}
+                          height={64}
+                        />
+                      </div>
+                    }
+                    description={
+                      <div className={styles.description}>
+                        <span>{restaurant.type?.split(';')[0] || '暂无分类'}</span>
                         <span>•</span>
-                        <span>¥{restaurant.cost}/人</span>
-                      </>
-                    )}
-                  </div>
-                }
-              >
-                {restaurant.name}
-              </List.Item>
-            ))}
-          </List>
-          <InfiniteScroll loadMore={loadMore} hasMore={hasMore} />
+                        <span>{restaurant.rating ? `${restaurant.rating}分` : '暂无评分'}</span>
+                        {restaurant.cost && (
+                          <>
+                            <span>•</span>
+                            <span>¥{restaurant.cost}/人</span>
+                          </>
+                        )}
+                      </div>
+                    }
+                  >
+                    {restaurant.name}
+                  </List.Item>
+                ))
+              ) : (
+                <div className={styles.emptyState}>
+                  <div className={styles.emptyIcon}>😅</div>
+                  <p>没有找到符合条件的餐厅</p>
+                  <Button
+                    color="primary"
+                    onClick={() => {
+                      handleFilterReset();
+                      if (searchInputRef.current) {
+                        searchInputRef.current.value = '';
+                      }
+                    }}
+                  >
+                    重置筛选条件
+                  </Button>
+                </div>
+              )}
+            </List>
+            {filteredRestaurants.length > 0 && !isSearching && (
+              <InfiniteScroll
+                loadMore={loadMore}
+                hasMore={hasMore && !isLoadingMore}
+                threshold={250}
+              />
+            )}
+          </PullToRefresh>
         </div>
       </div>
+      <Popup
+        visible={showFilter}
+        onMaskClick={() => setShowFilter(false)}
+        position="right"
+        bodyStyle={{ width: '80vw' }}
+      >
+        <div className={styles.filterContainer}>
+          <div className={styles.filterScroll}>
+            <div className={styles.filterSection}>
+              <h3>菜系类型</h3>
+              <Space wrap>
+                {CUISINE_TYPES.map(option => (
+                  <Tag
+                    key={option.value}
+                    color={tempFilterOptions.type.includes(option.value) ? 'primary' : 'default'}
+                    onClick={() => {
+                      const newTypes = tempFilterOptions.type.includes(option.value)
+                        ? tempFilterOptions.type.filter(t => t !== option.value)
+                        : [...tempFilterOptions.type, option.value];
+                      setTempFilterOptions(prev => ({ ...prev, type: newTypes }));
+                    }}
+                  >
+                    {option.label}
+                  </Tag>
+                ))}
+              </Space>
+            </div>
+            <div className={styles.filterSection}>
+              <h3>价格区间</h3>
+              <Radio.Group
+                value={tempFilterOptions.priceRange}
+                onChange={(value) => setTempFilterOptions(prev => ({ ...prev, priceRange: value.toString() }))}
+              >
+                <Space direction="vertical" block>
+                  {PRICE_RANGES.map(option => (
+                    <Radio key={option.value} value={option.value} block>
+                      {option.label}
+                    </Radio>
+                  ))}
+                </Space>
+              </Radio.Group>
+            </div>
+            <div className={styles.filterSection}>
+              <h3>最低评分</h3>
+              <Radio.Group
+                value={tempFilterOptions.rating}
+                onChange={(value) => setTempFilterOptions(prev => ({ ...prev, rating: value.toString() }))}
+              >
+                <Space direction="vertical" block>
+                  {RATING_OPTIONS.map(option => (
+                    <Radio key={option.value} value={option.value} block>
+                      {option.label}
+                    </Radio>
+                  ))}
+                </Space>
+              </Radio.Group>
+            </div>
+            <div className={styles.filterSection}>
+              <h3>排序方式</h3>
+              <Radio.Group
+                value={tempFilterOptions.sortBy}
+                onChange={(value) => setTempFilterOptions(prev => ({ ...prev, sortBy: value.toString() }))}
+              >
+                <Space direction="vertical" block>
+                  {SORT_OPTIONS.map(option => (
+                    <Radio key={option.value} value={option.value} block>
+                      {option.label}
+                    </Radio>
+                  ))}
+                </Space>
+              </Radio.Group>
+            </div>
+          </div>
+          <div className={styles.filterActions}>
+            <Button
+              block
+              color="default"
+              onClick={handleFilterReset}
+            >
+              重置
+            </Button>
+            <Button block color="primary" onClick={handleFilterConfirm}>
+              确定
+            </Button>
+          </div>
+        </div>
+      </Popup>
       <div className={styles.footer}>
         <Button
-          color="primary"
           block
+          color="primary"
+          size="large"
           onClick={handleRandomClick}
-          className={styles.randomButton}
+          loading={loading}
         >
           开盲盒
         </Button>
-        <Button
-          block
-          onClick={handleFavoriteClick}
-          className={styles.favoriteButton}
-        >
-          <HeartOutline fontSize={20} /> 我的收藏
-        </Button>
+        <div className={styles.favoriteButton}>
+          <Button
+            block
+            color="default"
+            size="large"
+            onClick={handleFavoriteClick}
+          >
+            <Space align="center">
+              <HeartOutline />
+              <span>我的收藏</span>
+            </Space>
+          </Button>
+        </div>
       </div>
     </div>
   );
