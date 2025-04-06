@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../hooks/useApp';
 import { mapService } from '../../utils/map';
 import { Toast } from '../../components/Toast';
+import HeartEffect from '../../components/HeartEffect';
 import {
   setLocation,
   setRestaurants,
@@ -79,6 +80,7 @@ const Home: React.FC = () => {
   const [filterOptions, setFilterOptions] = useState<FilterOptions>(defaultFilters);
   const [tempFilterOptions, setTempFilterOptions] = useState<FilterOptions>(defaultFilters);
   const [allRestaurants, setAllRestaurants] = useState<Restaurant[]>([]);
+  const [showHeartEffect, setShowHeartEffect] = useState(false);
   
   const initMap = async () => {
     try {
@@ -157,7 +159,14 @@ const Home: React.FC = () => {
     let result = [...allRestaurants];
 
     // 彩蛋功能
-    if (searchText === '请问李语馨是谁的宝宝？') {
+    if (searchText === '李语馨') {
+      if (!showHeartEffect) {
+        setShowHeartEffect(true);
+        // 10秒后关闭动效
+        setTimeout(() => {
+          setShowHeartEffect(false);
+        }, 10000);
+      }
       return [{
         id: 'easter_egg',
         name: '张宝文',
@@ -173,6 +182,8 @@ const Home: React.FC = () => {
         type: '最爱',
         tel: '',
       }];
+    } else if (showHeartEffect) {
+      setShowHeartEffect(false);
     }
 
     // 原有的筛选逻辑
@@ -365,6 +376,7 @@ const Home: React.FC = () => {
 
   return (
     <div className={styles.container}>
+      {showHeartEffect && <HeartEffect />}
       <div className={styles.header}>
         <h1>美食盲盒</h1>
         <p>让选择更简单</p>
