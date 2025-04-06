@@ -156,16 +156,32 @@ const Home: React.FC = () => {
   const filteredRestaurants = useMemo(() => {
     let result = [...allRestaurants];
 
-    // 应用搜索过滤
-    if (searchText.trim()) {
-      const searchLower = searchText.toLowerCase().trim();
-      result = result.filter(restaurant => {
-        const name = restaurant.name.toLowerCase();
-        // 1. 直接匹配
-        if (name.includes(searchLower)) return true;
-        // 2. TODO: 添加拼音匹配支持
-        return false;
-      });
+    // 彩蛋功能
+    if (searchText === '请问李语馨是谁的宝宝？') {
+      return [{
+        id: 'easter_egg',
+        name: '张宝文',
+        address: '❤️',
+        location: {
+          latitude: 0,
+          longitude: 0,
+          address: '❤️'
+        },
+        rating: 5,
+        distance: 0,
+        photos: [],
+        type: '最爱',
+        tel: '',
+      }];
+    }
+
+    // 原有的筛选逻辑
+    if (searchText) {
+      result = result.filter(
+        (restaurant) =>
+          restaurant.name.toLowerCase().includes(searchText.toLowerCase()) ||
+          restaurant.address.toLowerCase().includes(searchText.toLowerCase())
+      );
     }
 
     // 应用类型筛选

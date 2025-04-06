@@ -610,6 +610,7 @@ export class MapService {
       this.placeSearch?.setPageIndex(page);
       this.placeSearch?.searchNearBy(
         '美食',
+        // 测试数据： [113.233777, 22.992968],
         [location.longitude, location.latitude],
         1000,
         (status: string, result: PlaceSearchResult) => {
