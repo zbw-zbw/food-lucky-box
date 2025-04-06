@@ -16,6 +16,8 @@ const router = createBrowserRouter([
     path: '/favorite',
     element: <Favorite />,
   },
-]);
+], {
+  basename: '/food-lucky-box'
+});
 
 export default router; 
