@@ -169,7 +169,6 @@ export class MapService {
   private isLocating = false;
   private searchCache: SearchCache = {};
   private cleanupTimer: number | null = null;
-  private isInitializing = false;
   private initPromise: Promise<void> | null = null;
 
   private constructor() {
@@ -205,25 +204,18 @@ export class MapService {
             zoom: 15,
           });
 
-          this.geocoder = new AMap.Geocoder({
-            extensions: 'all',
-          });
+          this.geocoder = new AMap.Geocoder({});
 
           this.placeSearch = new AMap.PlaceSearch({
-            pageSize: 50,
-            pageIndex: 1,
-            city: '全国',
-            extensions: 'all',
+            pageSize: AMAP_CONFIG.pageSize,
           });
 
-          if (AMap.Geolocation) {
-            this.geolocation = new AMap.Geolocation({
-              enableHighAccuracy: true,
-              timeout: 10000,
-              zoomToAccuracy: true,
-              extensions: 'all',
-            });
-          }
+          this.geolocation = new AMap.Geolocation({
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0,
+            convert: true,
+          });
 
           console.log('高德地图初始化完成');
           resolve();
