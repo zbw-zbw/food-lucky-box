@@ -12,10 +12,14 @@ const HeartEffect: React.FC = () => {
       const heart = document.createElement('div');
       heart.className = styles.heart;
       
-      // 随机位置
+      // 随机位置和动画
       heart.style.left = Math.random() * 100 + 'vw';
-      heart.style.animationDuration = (Math.random() * 3 + 2) + 's'; // 2-5秒
-      heart.style.opacity = (Math.random() * 0.5 + 0.5).toString(); // 0.5-1
+      heart.style.animationDuration = (Math.random() * 2 + 3) + 's'; // 3-5秒
+      heart.style.opacity = (Math.random() * 0.3 + 0.7).toString(); // 0.7-1
+      
+      // 随机大小
+      const scale = Math.random() * 1.5 + 1; // 1-2.5倍大小
+      heart.style.transform = `scale(${scale})`;
       
       container.appendChild(heart);
 
@@ -25,12 +29,21 @@ const HeartEffect: React.FC = () => {
       }, 5000);
     };
 
-    // 创建多个心形
-    const interval = setInterval(() => {
-      for (let i = 0; i < 3; i++) {
+    // 初始创建一批爱心
+    for (let i = 0; i < 20; i++) {
+      setTimeout(() => {
         createHeart();
+      }, i * 100);
+    }
+
+    // 持续创建爱心
+    const interval = setInterval(() => {
+      for (let i = 0; i < 4; i++) {
+        setTimeout(() => {
+          createHeart();
+        }, i * 150);
       }
-    }, 300);
+    }, 400);
 
     return () => {
       clearInterval(interval);

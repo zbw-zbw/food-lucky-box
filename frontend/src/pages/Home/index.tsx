@@ -1,5 +1,15 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
-import { Button, List, InfiniteScroll, DotLoading, PullToRefresh, Popup, Radio, Space, Tag } from 'antd-mobile';
+import {
+  Button,
+  List,
+  InfiniteScroll,
+  DotLoading,
+  PullToRefresh,
+  Popup,
+  Radio,
+  Space,
+  Tag,
+} from 'antd-mobile';
 import { HeartOutline, FilterOutline } from 'antd-mobile-icons';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../hooks/useApp';
@@ -16,6 +26,8 @@ import { Restaurant, Location as MapLocation } from '../../utils/map';
 import styles from './index.module.scss';
 import Image from '../../components/Image';
 import { debounce } from 'lodash';
+import lyxzbw1 from '../../assets/lyxzbw1.jpg';
+import lyxzbw2 from '../../assets/lyxzbw2.jpg';
 
 interface FilterOptions {
   type: string[];
@@ -58,7 +70,9 @@ const SORT_OPTIONS = [
 const Home: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { location, restaurants, loading } = useAppSelector((state) => state.app);
+  const { location, restaurants, loading } = useAppSelector(
+    (state) => state.app
+  );
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const initRef = useRef(false);
@@ -68,7 +82,7 @@ const Home: React.FC = () => {
   const [isInitializing, setIsInitializing] = useState(true);
   const [isSearching, setIsSearching] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
-  
+
   // 修改默认筛选状态，包含"全部"选项
   const defaultFilters: FilterOptions = {
     type: ['all'],
@@ -76,12 +90,14 @@ const Home: React.FC = () => {
     rating: 'all',
     sortBy: 'default',
   };
-  
-  const [filterOptions, setFilterOptions] = useState<FilterOptions>(defaultFilters);
-  const [tempFilterOptions, setTempFilterOptions] = useState<FilterOptions>(defaultFilters);
+
+  const [filterOptions, setFilterOptions] =
+    useState<FilterOptions>(defaultFilters);
+  const [tempFilterOptions, setTempFilterOptions] =
+    useState<FilterOptions>(defaultFilters);
   const [allRestaurants, setAllRestaurants] = useState<Restaurant[]>([]);
   const [showHeartEffect, setShowHeartEffect] = useState(false);
-  
+
   const initMap = async () => {
     try {
       await mapService.init();
@@ -109,6 +125,154 @@ const Home: React.FC = () => {
       dispatch(setLoading(false));
     }
   };
+
+  // 防抖的搜索处理函数
+  const debouncedSearch = useRef(
+    debounce((value: string) => {
+      setSearchText(value);
+      setIsSearching(false);
+    }, 500)
+  ).current;
+
+  // 处理搜索输入
+  const handleSearchInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setIsSearching(true);
+    debouncedSearch(value);
+  };
+
+  // 使用 useMemo 缓存过滤结果
+  const filteredRestaurants = useMemo(() => {
+    let result = [...allRestaurants];
+
+    // 彩蛋功能
+    if (searchText.trim() === '李语馨') {
+      if (!showHeartEffect) {
+        setShowHeartEffect(true);
+        // 10秒后关闭动效
+        setTimeout(() => {
+          setShowHeartEffect(false);
+        }, 10000);
+      }
+      return [
+        {
+          id: 'easter_egg',
+          name: '张宝文',
+          address: '❤️',
+          location: {
+            latitude: 0,
+            longitude: 0,
+            address: '❤️',
+          },
+          rating: 5,
+          distance: 0,
+          photos: [lyxzbw1, lyxzbw2],
+          type: '最爱',
+          tel: '13790920981',
+        },
+      ];
+    } else if (showHeartEffect) {
+      setShowHeartEffect(false);
+    }
+
+    // 原有的筛选逻辑
+    if (searchText.trim()) {
+      const searchLower = searchText.toLowerCase().trim();
+      result = result.filter((restaurant) => {
+        const name = restaurant.name.toLowerCase();
+        const address = restaurant.address.toLowerCase();
+        return name.includes(searchLower) || address.includes(searchLower);
+      });
+    }
+
+    // 应用类型筛选
+    if (filterOptions.type.length > 0 && !filterOptions.type.includes('all')) {
+      result = result.filter((restaurant) =>
+        filterOptions.type.some((type) =>
+          restaurant.type?.toLowerCase().includes(type)
+        )
+      );
+    }
+
+    // 应用价格区间筛选
+    if (filterOptions.priceRange !== 'all') {
+      const [min, max] = filterOptions.priceRange.split('-').map(Number);
+      result = result.filter((restaurant) => {
+        const cost = Number(restaurant.cost);
+        if (!cost) return false;
+        if (!max) return cost >= min;
+        return cost >= min && cost <= max;
+      });
+    }
+
+    // 应用评分筛选
+    if (filterOptions.rating !== 'all') {
+      const minRating = Number(filterOptions.rating);
+      result = result.filter((restaurant) => restaurant.rating >= minRating);
+    }
+
+    // 应用排序
+    switch (filterOptions.sortBy) {
+      case 'distance':
+        result.sort((a, b) => a.distance - b.distance);
+        break;
+      case 'rating':
+        result.sort((a, b) => b.rating - a.rating);
+        break;
+      default:
+        // 综合排序：评分 * 1000 / 距离
+        result.sort(
+          (a, b) =>
+            (b.rating * 1000) / b.distance - (a.rating * 1000) / a.distance
+        );
+    }
+
+    return result;
+  }, [allRestaurants, searchText, filterOptions, showHeartEffect]);
+
+  // 更新缓存
+  const updateCache = (restaurants: Restaurant[], location: MapLocation) => {
+    try {
+      localStorage.setItem('restaurants', JSON.stringify(restaurants));
+      localStorage.setItem('location', JSON.stringify(location));
+      localStorage.setItem('cacheTimestamp', Date.now().toString());
+    } catch (error) {
+      console.warn('Failed to update cache:', error);
+    }
+  };
+
+  // 从缓存加载数据
+  useEffect(() => {
+    const loadFromCache = () => {
+      try {
+        const cachedRestaurants = localStorage.getItem('restaurants');
+        const cachedLocation = localStorage.getItem('location');
+        const cachedTimestamp = localStorage.getItem('cacheTimestamp');
+
+        if (cachedRestaurants && cachedLocation && cachedTimestamp) {
+          const timestamp = parseInt(cachedTimestamp);
+          // 检查缓存是否在24小时内
+          if (Date.now() - timestamp < 24 * 60 * 60 * 1000) {
+            const restaurants = JSON.parse(cachedRestaurants);
+            const location = JSON.parse(cachedLocation);
+            dispatch(setRestaurants(restaurants));
+            dispatch(setLocation(location));
+            setAllRestaurants(restaurants);
+            locationRef.current = location;
+            return true;
+          }
+        }
+      } catch (error) {
+        console.warn('Failed to load from cache:', error);
+      }
+      return false;
+    };
+
+    // 初始化时尝试从缓存加载
+    if (!initRef.current && loadFromCache()) {
+      setIsInitializing(false);
+    }
+  }, []);
 
   // 初始化加载
   useEffect(() => {
@@ -139,135 +303,25 @@ const Home: React.FC = () => {
     }
   }, [location]);
 
-  // 防抖的搜索处理函数
-  const debouncedSearch = useRef(
-    debounce((value: string) => {
-      setSearchText(value);
-      setIsSearching(false);
-    }, 500)
-  ).current;
-
-  // 处理搜索输入
-  const handleSearchInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setIsSearching(true);
-    debouncedSearch(value);
-  };
-
-  // 使用 useMemo 缓存过滤结果
-  const filteredRestaurants = useMemo(() => {
-    let result = [...allRestaurants];
-
-    // 彩蛋功能
-    if (searchText === '李语馨') {
-      if (!showHeartEffect) {
-        setShowHeartEffect(true);
-        // 10秒后关闭动效
-        setTimeout(() => {
-          setShowHeartEffect(false);
-        }, 10000);
-      }
-      return [{
-        id: 'easter_egg',
-        name: '张宝文',
-        address: '❤️',
-        location: {
-          latitude: 0,
-          longitude: 0,
-          address: '❤️'
-        },
-        rating: 5,
-        distance: 0,
-        photos: [],
-        type: '最爱',
-        tel: '',
-      }];
-    } else if (showHeartEffect) {
-      setShowHeartEffect(false);
-    }
-
-    // 原有的筛选逻辑
-    if (searchText) {
-      result = result.filter(
-        (restaurant) =>
-          restaurant.name.toLowerCase().includes(searchText.toLowerCase()) ||
-          restaurant.address.toLowerCase().includes(searchText.toLowerCase())
-      );
-    }
-
-    // 应用类型筛选
-    if (filterOptions.type.length > 0 && !filterOptions.type.includes('all')) {
-      result = result.filter(restaurant => 
-        filterOptions.type.some(type => 
-          restaurant.type?.toLowerCase().includes(type)
-        )
-      );
-    }
-
-    // 应用价格区间筛选
-    if (filterOptions.priceRange !== 'all') {
-      const [min, max] = filterOptions.priceRange.split('-').map(Number);
-      result = result.filter(restaurant => {
-        const cost = Number(restaurant.cost);
-        if (!cost) return false;
-        if (!max) return cost >= min;
-        return cost >= min && cost <= max;
-      });
-    }
-
-    // 应用评分筛选
-    if (filterOptions.rating !== 'all') {
-      const minRating = Number(filterOptions.rating);
-      result = result.filter(restaurant => 
-        restaurant.rating >= minRating
-      );
-    }
-
-    // 应用排序
-    switch (filterOptions.sortBy) {
-      case 'distance':
-        result.sort((a, b) => a.distance - b.distance);
-        break;
-      case 'rating':
-        result.sort((a, b) => b.rating - a.rating);
-        break;
-      default:
-        // 综合排序：评分 * 1000 / 距离
-        result.sort((a, b) => 
-          (b.rating * 1000 / b.distance) - (a.rating * 1000 / a.distance)
-        );
-    }
-
-    return result;
-  }, [allRestaurants, searchText, filterOptions]);
-
-  // 更新缓存
-  const updateCache = (restaurants: Restaurant[], location: MapLocation) => {
-    try {
-      localStorage.setItem('restaurants', JSON.stringify(restaurants));
-      localStorage.setItem('location', JSON.stringify(location));
-      localStorage.setItem('cacheTimestamp', Date.now().toString());
-    } catch (error) {
-      console.warn('Failed to update cache:', error);
-    }
-  };
-
   const loadRestaurants = async (page: number, isLoadingMore = false) => {
     const currentLocation = locationRef.current;
     if (!currentLocation) return;
-    
+
     try {
       // 只在非加载更多时设置全局 loading
       if (!isLoadingMore) {
         dispatch(setLoading(true));
       }
 
-      const newRestaurants = await mapService.searchNearbyRestaurants(currentLocation, page);
+      const newRestaurants = await mapService.searchNearbyRestaurants(
+        currentLocation,
+        page
+      );
       if (newRestaurants.length === 0) {
         setHasMore(false);
         return;
       }
-      
+
       if (page === 1) {
         dispatch(setRestaurants(newRestaurants));
         setAllRestaurants(newRestaurants);
@@ -298,7 +352,7 @@ const Home: React.FC = () => {
 
   const loadMore = async () => {
     if (isLoadingMore) return;
-    
+
     try {
       setIsLoadingMore(true);
       await loadRestaurants(currentPage + 1, true);
@@ -413,10 +467,7 @@ const Home: React.FC = () => {
                 <div className={styles.emptyState}>
                   <div className={styles.emptyIcon}>🍽️</div>
                   <p>正在搜索附近的餐厅...</p>
-                  <Button
-                    color="primary"
-                    onClick={() => loadRestaurants(1)}
-                  >
+                  <Button color="primary" onClick={() => loadRestaurants(1)}>
                     重新加载
                   </Button>
                 </div>
@@ -437,9 +488,15 @@ const Home: React.FC = () => {
                     }
                     description={
                       <div className={styles.description}>
-                        <span>{restaurant.type?.split(';')[0] || '暂无分类'}</span>
+                        <span>
+                          {restaurant.type?.split(';')[0] || '暂无分类'}
+                        </span>
                         <span>•</span>
-                        <span>{restaurant.rating ? `${restaurant.rating}分` : '暂无评分'}</span>
+                        <span>
+                          {restaurant.rating
+                            ? `${restaurant.rating}分`
+                            : '暂无评分'}
+                        </span>
                         {restaurant.cost && (
                           <>
                             <span>•</span>
@@ -491,15 +548,26 @@ const Home: React.FC = () => {
             <div className={styles.filterSection}>
               <h3>菜系类型</h3>
               <Space wrap>
-                {CUISINE_TYPES.map(option => (
+                {CUISINE_TYPES.map((option) => (
                   <Tag
                     key={option.value}
-                    color={tempFilterOptions.type.includes(option.value) ? 'primary' : 'default'}
+                    color={
+                      tempFilterOptions.type.includes(option.value)
+                        ? 'primary'
+                        : 'default'
+                    }
                     onClick={() => {
-                      const newTypes = tempFilterOptions.type.includes(option.value)
-                        ? tempFilterOptions.type.filter(t => t !== option.value)
+                      const newTypes = tempFilterOptions.type.includes(
+                        option.value
+                      )
+                        ? tempFilterOptions.type.filter(
+                            (t) => t !== option.value
+                          )
                         : [...tempFilterOptions.type, option.value];
-                      setTempFilterOptions(prev => ({ ...prev, type: newTypes }));
+                      setTempFilterOptions((prev) => ({
+                        ...prev,
+                        type: newTypes,
+                      }));
                     }}
                   >
                     {option.label}
@@ -511,10 +579,15 @@ const Home: React.FC = () => {
               <h3>价格区间</h3>
               <Radio.Group
                 value={tempFilterOptions.priceRange}
-                onChange={(value) => setTempFilterOptions(prev => ({ ...prev, priceRange: value.toString() }))}
+                onChange={(value) =>
+                  setTempFilterOptions((prev) => ({
+                    ...prev,
+                    priceRange: value.toString(),
+                  }))
+                }
               >
                 <Space direction="vertical" block>
-                  {PRICE_RANGES.map(option => (
+                  {PRICE_RANGES.map((option) => (
                     <Radio key={option.value} value={option.value} block>
                       {option.label}
                     </Radio>
@@ -526,10 +599,15 @@ const Home: React.FC = () => {
               <h3>最低评分</h3>
               <Radio.Group
                 value={tempFilterOptions.rating}
-                onChange={(value) => setTempFilterOptions(prev => ({ ...prev, rating: value.toString() }))}
+                onChange={(value) =>
+                  setTempFilterOptions((prev) => ({
+                    ...prev,
+                    rating: value.toString(),
+                  }))
+                }
               >
                 <Space direction="vertical" block>
-                  {RATING_OPTIONS.map(option => (
+                  {RATING_OPTIONS.map((option) => (
                     <Radio key={option.value} value={option.value} block>
                       {option.label}
                     </Radio>
@@ -541,10 +619,15 @@ const Home: React.FC = () => {
               <h3>排序方式</h3>
               <Radio.Group
                 value={tempFilterOptions.sortBy}
-                onChange={(value) => setTempFilterOptions(prev => ({ ...prev, sortBy: value.toString() }))}
+                onChange={(value) =>
+                  setTempFilterOptions((prev) => ({
+                    ...prev,
+                    sortBy: value.toString(),
+                  }))
+                }
               >
                 <Space direction="vertical" block>
-                  {SORT_OPTIONS.map(option => (
+                  {SORT_OPTIONS.map((option) => (
                     <Radio key={option.value} value={option.value} block>
                       {option.label}
                     </Radio>
@@ -554,11 +637,7 @@ const Home: React.FC = () => {
             </div>
           </div>
           <div className={styles.filterActions}>
-            <Button
-              block
-              color="default"
-              onClick={handleFilterReset}
-            >
+            <Button block color="default" onClick={handleFilterReset}>
               重置
             </Button>
             <Button block color="primary" onClick={handleFilterConfirm}>

@@ -5,47 +5,57 @@
   width: 100vw;
   height: 100vh;
   pointer-events: none;
-  z-index: 1000;
+  z-index: 9999;
+  overflow: hidden;
 }
 
 .heart {
-  position: absolute;
+  position: fixed;
   width: 20px;
   height: 20px;
-  bottom: 0;
   animation: floatUp linear forwards;
+  filter: drop-shadow(0 0 5px rgba(255, 105, 180, 0.5));
   
   &::before,
   &::after {
-    content: '';
     position: absolute;
-    width: 20px;
-    height: 32px;
-    border-radius: 32px 32px 0 0;
-    background-color: #ff69b4;
-    transform-origin: 50% 100%;
-  }
-  
-  &::before {
-    transform: rotate(-45deg);
+    content: '';
     left: 10px;
+    top: 0;
+    width: 10px;
+    height: 16px;
+    background: #ff69b4;
+    border-radius: 10px 10px 0 0;
+    transform: rotate(-45deg);
+    transform-origin: 0 100%;
   }
-  
+
   &::after {
+    left: 0;
     transform: rotate(45deg);
-    right: 10px;
+    transform-origin: 100% 100%;
   }
 }
 
 @keyframes floatUp {
   0% {
-    transform: translateY(100vh) scale(0);
+    transform: translateY(110vh) scale(0) rotate(0deg);
+    opacity: 1;
+  }
+  25% {
+    transform: translateY(80vh) scale(0.6) rotate(-15deg);
+    opacity: 0.9;
   }
   50% {
-    transform: translateY(50vh) scale(1);
+    transform: translateY(50vh) scale(1) rotate(0deg);
+    opacity: 0.8;
+  }
+  75% {
+    transform: translateY(20vh) scale(0.8) rotate(15deg);
+    opacity: 0.6;
   }
   100% {
-    transform: translateY(-20vh) scale(0.5);
+    transform: translateY(-10vh) scale(0.6) rotate(0deg);
     opacity: 0;
   }
 } 
