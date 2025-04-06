@@ -28,6 +28,7 @@ import Image from '../../components/Image';
 import { debounce } from 'lodash';
 import lyxzbw1 from '../../assets/lyxzbw1.jpg';
 import lyxzbw2 from '../../assets/lyxzbw2.jpg';
+import lyxzbw3 from '../../assets/lyxzbw3.jpg';
 
 interface FilterOptions {
   type: string[];
@@ -166,7 +167,7 @@ const Home: React.FC = () => {
           },
           rating: 5,
           distance: 0,
-          photos: [lyxzbw1, lyxzbw2],
+          photos: [lyxzbw1, lyxzbw2, lyxzbw3],
           type: '最爱',
           tel: '13790920981',
         },
