@@ -80,6 +80,63 @@ const Home: React.FC = () => {
   const [tempFilterOptions, setTempFilterOptions] = useState<FilterOptions>(defaultFilters);
   const [allRestaurants, setAllRestaurants] = useState<Restaurant[]>([]);
   
+  const initMap = async () => {
+    try {
+      await mapService.init();
+      await getCurrentLocation();
+    } catch {
+      Toast.show({
+        content: '地图初始化失败',
+      });
+    } finally {
+      setIsInitializing(false);
+    }
+  };
+
+  const getCurrentLocation = async () => {
+    try {
+      dispatch(setLoading(true));
+      const location = await mapService.getCurrentLocation();
+      dispatch(setLocation(location));
+      // 不在这里加载餐厅数据，由 useEffect 监听 location 变化时加载
+    } catch {
+      Toast.show({
+        content: '获取位置失败，请检查定位权限',
+      });
+    } finally {
+      dispatch(setLoading(false));
+    }
+  };
+
+  // 初始化加载
+  useEffect(() => {
+    const init = async () => {
+      if (!initRef.current) {
+        try {
+          setIsInitializing(true);
+          await initMap();
+          initRef.current = true;
+        } catch (error) {
+          console.error('初始化失败:', error);
+          Toast.show({
+            content: '初始化失败，请刷新重试',
+          });
+        } finally {
+          setIsInitializing(false);
+        }
+      }
+    };
+    init();
+  }, []);
+
+  // 监听位置变化
+  useEffect(() => {
+    if (location && location !== locationRef.current) {
+      locationRef.current = location;
+      loadRestaurants(1);
+    }
+  }, [location]);
+
   // 防抖的搜索处理函数
   const debouncedSearch = useRef(
     debounce((value: string) => {
@@ -157,41 +214,6 @@ const Home: React.FC = () => {
     return result;
   }, [allRestaurants, searchText, filterOptions]);
 
-  // 初始化时检查缓存
-  useEffect(() => {
-    const cachedRestaurants = localStorage.getItem('restaurants');
-    const cachedLocation = localStorage.getItem('location');
-    const cachedTimestamp = localStorage.getItem('cacheTimestamp');
-
-    // 检查缓存是否在24小时内
-    const isCacheValid = cachedTimestamp && 
-      (Date.now() - parseInt(cachedTimestamp)) < 24 * 60 * 60 * 1000;
-
-    if (cachedRestaurants && cachedLocation && isCacheValid) {
-      try {
-        const parsedRestaurants = JSON.parse(cachedRestaurants);
-        const parsedLocation = JSON.parse(cachedLocation);
-        
-        // 使用缓存数据
-        dispatch(setRestaurants(parsedRestaurants));
-        dispatch(setLocation(parsedLocation));
-        setAllRestaurants(parsedRestaurants);
-        locationRef.current = parsedLocation;
-        setIsInitializing(false);
-      } catch {
-        // 缓存数据解析失败，清除缓存
-        localStorage.removeItem('restaurants');
-        localStorage.removeItem('location');
-        localStorage.removeItem('cacheTimestamp');
-      }
-    }
-
-    if (!initRef.current) {
-      initRef.current = true;
-      initMap();
-    }
-  }, []);
-
   // 更新缓存
   const updateCache = (restaurants: Restaurant[], location: MapLocation) => {
     try {
@@ -200,35 +222,6 @@ const Home: React.FC = () => {
       localStorage.setItem('cacheTimestamp', Date.now().toString());
     } catch (error) {
       console.warn('Failed to update cache:', error);
-    }
-  };
-
-  const initMap = async () => {
-    try {
-      await mapService.init();
-      await getCurrentLocation();
-    } catch {
-      Toast.show({
-        content: '地图初始化失败',
-      });
-    } finally {
-      setIsInitializing(false);
-    }
-  };
-
-  const getCurrentLocation = async () => {
-    try {
-      dispatch(setLoading(true));
-      const location = await mapService.getCurrentLocation();
-      dispatch(setLocation(location));
-      // 获取位置后立即加载餐厅数据
-      await loadRestaurants(1);
-    } catch {
-      Toast.show({
-        content: '获取位置失败，请检查定位权限',
-      });
-    } finally {
-      dispatch(setLoading(false));
     }
   };
 

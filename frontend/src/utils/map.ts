@@ -169,6 +169,8 @@ export class MapService {
   private isLocating = false;
   private searchCache: SearchCache = {};
   private cleanupTimer: number | null = null;
+  private isInitializing = false;
+  private initPromise: Promise<void> | null = null;
 
   private constructor() {
     this.loadCacheFromStorage();
@@ -183,45 +185,56 @@ export class MapService {
   }
 
   public async init() {
+    // 如果已经初始化完成，直接返回
     if (this.map) return;
 
-    try {
-      console.log('开始初始化高德地图...');
-      const AMap = await AMapLoader.load({
+    // 如果正在初始化，返回现有的 Promise
+    if (this.initPromise) return this.initPromise;
+
+    // 开始新的初始化
+    this.initPromise = new Promise((resolve, reject) => {
+      AMapLoader.load({
         key: AMAP_CONFIG.key,
         version: '2.0',
         plugins: ['AMap.Geocoder', 'AMap.PlaceSearch', 'AMap.Geolocation'],
-      });
+      })
+        .then((AMap) => {
+          console.log('开始初始化高德地图...');
+          
+          this.map = new AMap.Map('container', {
+            zoom: 15,
+          });
 
-      this.map = new AMap.Map('container', {
-        zoom: 15,
-      });
+          this.geocoder = new AMap.Geocoder({
+            extensions: 'all',
+          });
 
-      this.geocoder = new AMap.Geocoder({
-        extensions: 'all',
-      });
+          this.placeSearch = new AMap.PlaceSearch({
+            pageSize: 50,
+            pageIndex: 1,
+            city: '全国',
+            extensions: 'all',
+          });
 
-      this.placeSearch = new AMap.PlaceSearch({
-        pageSize: 50,
-        pageIndex: 1,
-        city: '全国',
-        extensions: 'all',
-      });
+          if (AMap.Geolocation) {
+            this.geolocation = new AMap.Geolocation({
+              enableHighAccuracy: true,
+              timeout: 10000,
+              zoomToAccuracy: true,
+              extensions: 'all',
+            });
+          }
 
-      if (AMap.Geolocation) {
-        this.geolocation = new AMap.Geolocation({
-          enableHighAccuracy: true,
-          timeout: 10000,
-          zoomToAccuracy: true,
-          extensions: 'all',
+          console.log('高德地图初始化完成');
+          resolve();
+        })
+        .catch((error) => {
+          this.initPromise = null;
+          reject(error);
         });
-      }
+    });
 
-      console.log('高德地图初始化成功');
-    } catch (error) {
-      console.error('高德地图加载失败:', error);
-      throw error;
-    }
+    return this.initPromise;
   }
 
   public async getCurrentLocation(): Promise<Location> {
