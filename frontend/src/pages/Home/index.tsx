@@ -169,7 +169,7 @@ const Home: React.FC = () => {
           distance: 0,
           photos: [lyxzbw1, lyxzbw2, lyxzbw3],
           type: '最爱',
-          tel: '13790920981',
+          tel: '',
         },
       ];
     } else if (showHeartEffect) {
