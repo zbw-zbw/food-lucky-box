@@ -14,8 +14,10 @@
   "dependencies": {
     "@amap/amap-jsapi-loader": "^1.0.1",
     "@reduxjs/toolkit": "^2.6.1",
+    "@types/lodash-es": "^4.17.12",
     "antd-mobile": "^5.39.0",
     "axios": "^1.8.4",
+    "lodash-es": "^4.17.21",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-redux": "^9.2.0",
@@ -25,6 +27,7 @@
   "devDependencies": {
     "@eslint/js": "^9.21.0",
     "@types/lodash": "^4.17.16",
+    "@types/node": "^22.14.0",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
     "@typescript-eslint/eslint-plugin": "^8.29.0",
