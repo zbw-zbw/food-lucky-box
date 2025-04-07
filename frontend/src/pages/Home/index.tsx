@@ -76,6 +76,8 @@ const Home: React.FC = () => {
   const [isInitializing, setIsInitializing] = useState(true);
   const [isSearching, setIsSearching] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const [isComposing, setIsComposing] = useState(false);
+  const lastValueRef = useRef<string>('');
 
   // 修改默认筛选状态，包含"全部"选项
   const defaultFilters: FilterOptions = {
@@ -126,11 +128,23 @@ const Home: React.FC = () => {
     }, 500)
   ).current;
 
+  // 处理中文输入法结束
+  const handleCompositionEnd = (e: React.CompositionEvent<HTMLInputElement>) => {
+    setIsComposing(false);
+    const value = e.currentTarget.value;
+    setIsSearching(true);
+    debouncedSearch(value);
+  };
+
   // 处理搜索输入
   const handleSearchInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    setIsSearching(true);
-    debouncedSearch(value);
+    lastValueRef.current = value;
+
+    if (!isComposing) {
+      setIsSearching(true);
+      debouncedSearch(value);
+    }
   };
 
   // 使用 useMemo 缓存过滤结果
@@ -335,7 +349,7 @@ const Home: React.FC = () => {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   const loadMore = async () => {
-    if (isLoadingMore) return;
+    if (isLoadingMore || isSearching || searchText.trim()) return;
 
     try {
       setIsLoadingMore(true);
@@ -428,6 +442,8 @@ const Home: React.FC = () => {
               placeholder="搜索餐厅名称"
               defaultValue={searchText}
               onChange={handleSearchInput}
+              onCompositionStart={() => setIsComposing(true)}
+              onCompositionEnd={handleCompositionEnd}
             />
           </div>
           <div className={styles.searchFilter} onClick={handleShowFilter}>
@@ -505,7 +521,7 @@ const Home: React.FC = () => {
                 </div>
               )}
             </List>
-            {filteredRestaurants.length > 0 && !isSearching && (
+            {filteredRestaurants.length > 0 && !isSearching && !searchText.trim() && (
               <InfiniteScroll
                 loadMore={loadMore}
                 hasMore={hasMore && !isLoadingMore}
