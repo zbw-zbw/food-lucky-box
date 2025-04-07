@@ -40,7 +40,7 @@ cd food-lucky-box
 2. 运行前端项目
 ```bash
 cd frontend
-npm install
+npm install --legacy-peer-deps
 npm run dev
 ```
 
