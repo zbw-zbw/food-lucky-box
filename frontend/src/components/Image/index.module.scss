@@ -34,7 +34,8 @@
   object-fit: cover;
   transition: opacity 0.3s ease;
 
-  &[src=""], &:not([src]) {
+  &[src=''],
+  &:not([src]) {
     opacity: 0;
   }
-} 
+}

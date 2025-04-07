@@ -24,9 +24,7 @@ const ToastComponent: React.FC<ToastProps> = ({ content, duration = 2000, onClos
 
   return (
     <div className={styles.toastOverlay}>
-      <div className={styles.toastContent}>
-        {content}
-      </div>
+      <div className={styles.toastContent}>{content}</div>
     </div>
   );
 };
@@ -59,4 +57,4 @@ const show = (options: ToastOptions) => {
 
 export const Toast = {
   show,
-}; 
+};

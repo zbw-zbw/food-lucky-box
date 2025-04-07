@@ -9,7 +9,7 @@ import { Restaurant } from '../../utils/map';
 const Favorite: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { favorites } = useAppSelector((state) => state.app);
+  const { favorites } = useAppSelector(state => state.app);
 
   const handleBack = () => {
     navigate(-1);
@@ -22,18 +22,17 @@ const Favorite: React.FC = () => {
 
   return (
     <div className={styles.container}>
-      <NavBar onBack={handleBack} className={styles.navbar}>我的收藏</NavBar>
+      <NavBar onBack={handleBack} className={styles.navbar}>
+        我的收藏
+      </NavBar>
       {favorites.length > 0 ? (
         <List className={styles.list}>
-          {favorites.map((restaurant) => (
+          {favorites.map(restaurant => (
             <List.Item
               key={restaurant.id}
               prefix={
                 <div className={styles.imageWrapper}>
-                  <img
-                    src={restaurant.photos?.[0] || '/placeholder.png'}
-                    alt={restaurant.name}
-                  />
+                  <img src={restaurant.photos?.[0] || '/placeholder.png'} alt={restaurant.name} />
                 </div>
               }
               onClick={() => handleItemClick(restaurant)}
@@ -56,4 +55,4 @@ const Favorite: React.FC = () => {
   );
 };
 
-export default Favorite; 
+export default Favorite;

@@ -33,10 +33,10 @@ export const requestLocationPermission = async (): Promise<boolean> => {
     return false;
   }
 
-  return new Promise((resolve) => {
+  return new Promise(resolve => {
     navigator.geolocation.getCurrentPosition(
       () => resolve(true),
-      (error) => {
+      error => {
         if (error.code === error.PERMISSION_DENIED) {
           Toast.show({
             content: '需要位置权限才能使用此功能，请在浏览器设置中开启位置权限',
@@ -51,4 +51,4 @@ export const requestLocationPermission = async (): Promise<boolean> => {
       { timeout: 5000 }
     );
   });
-}; 
+};

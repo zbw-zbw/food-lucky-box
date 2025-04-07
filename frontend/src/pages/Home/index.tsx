@@ -16,12 +16,7 @@ import { useAppDispatch, useAppSelector } from '../../hooks/useApp';
 import { mapService } from '../../utils/map';
 import { Toast } from '../../components/Toast';
 import HeartEffect from '../../components/HeartEffect';
-import {
-  setLocation,
-  setRestaurants,
-  setSelectedRestaurant,
-  setLoading,
-} from '../../store';
+import { setLocation, setRestaurants, setSelectedRestaurant, setLoading } from '../../store';
 import { Restaurant, Location as MapLocation } from '../../utils/map';
 import styles from './index.module.scss';
 import Image from '../../components/Image';
@@ -71,9 +66,7 @@ const SORT_OPTIONS = [
 const Home: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { location, restaurants, loading } = useAppSelector(
-    (state) => state.app
-  );
+  const { location, restaurants, loading } = useAppSelector(state => state.app);
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const initRef = useRef(false);
@@ -92,10 +85,8 @@ const Home: React.FC = () => {
     sortBy: 'default',
   };
 
-  const [filterOptions, setFilterOptions] =
-    useState<FilterOptions>(defaultFilters);
-  const [tempFilterOptions, setTempFilterOptions] =
-    useState<FilterOptions>(defaultFilters);
+  const [filterOptions, setFilterOptions] = useState<FilterOptions>(defaultFilters);
+  const [tempFilterOptions, setTempFilterOptions] = useState<FilterOptions>(defaultFilters);
   const [allRestaurants, setAllRestaurants] = useState<Restaurant[]>([]);
   const [showHeartEffect, setShowHeartEffect] = useState(false);
 
@@ -179,7 +170,7 @@ const Home: React.FC = () => {
     // 原有的筛选逻辑
     if (searchText.trim()) {
       const searchLower = searchText.toLowerCase().trim();
-      result = result.filter((restaurant) => {
+      result = result.filter(restaurant => {
         const name = restaurant.name.toLowerCase();
         const address = restaurant.address.toLowerCase();
         return name.includes(searchLower) || address.includes(searchLower);
@@ -188,17 +179,15 @@ const Home: React.FC = () => {
 
     // 应用类型筛选
     if (filterOptions.type.length > 0 && !filterOptions.type.includes('all')) {
-      result = result.filter((restaurant) =>
-        filterOptions.type.some((type) =>
-          restaurant.type?.toLowerCase().includes(type)
-        )
+      result = result.filter(restaurant =>
+        filterOptions.type.some(type => restaurant.type?.toLowerCase().includes(type))
       );
     }
 
     // 应用价格区间筛选
     if (filterOptions.priceRange !== 'all') {
       const [min, max] = filterOptions.priceRange.split('-').map(Number);
-      result = result.filter((restaurant) => {
+      result = result.filter(restaurant => {
         const cost = Number(restaurant.cost);
         if (!cost) return false;
         if (!max) return cost >= min;
@@ -209,7 +198,7 @@ const Home: React.FC = () => {
     // 应用评分筛选
     if (filterOptions.rating !== 'all') {
       const minRating = Number(filterOptions.rating);
-      result = result.filter((restaurant) => restaurant.rating >= minRating);
+      result = result.filter(restaurant => restaurant.rating >= minRating);
     }
 
     // 应用排序
@@ -222,10 +211,7 @@ const Home: React.FC = () => {
         break;
       default:
         // 综合排序：评分 * 1000 / 距离
-        result.sort(
-          (a, b) =>
-            (b.rating * 1000) / b.distance - (a.rating * 1000) / a.distance
-        );
+        result.sort((a, b) => (b.rating * 1000) / b.distance - (a.rating * 1000) / a.distance);
     }
 
     return result;
@@ -314,10 +300,7 @@ const Home: React.FC = () => {
         dispatch(setLoading(true));
       }
 
-      const newRestaurants = await mapService.searchNearbyRestaurants(
-        currentLocation,
-        page
-      );
+      const newRestaurants = await mapService.searchNearbyRestaurants(currentLocation, page);
       if (newRestaurants.length === 0) {
         setHasMore(false);
         return;
@@ -454,7 +437,7 @@ const Home: React.FC = () => {
         <div className={styles.listWrapper} ref={listWrapperRef}>
           <PullToRefresh
             onRefresh={handleRefresh}
-            renderText={(status) => {
+            renderText={status => {
               return {
                 pulling: '下拉刷新',
                 canRelease: '释放立即刷新',
@@ -473,7 +456,7 @@ const Home: React.FC = () => {
                   </Button>
                 </div>
               ) : filteredRestaurants.length > 0 ? (
-                filteredRestaurants.map((restaurant) => (
+                filteredRestaurants.map(restaurant => (
                   <List.Item
                     key={restaurant.id}
                     onClick={() => handleRestaurantClick(restaurant)}
@@ -489,15 +472,9 @@ const Home: React.FC = () => {
                     }
                     description={
                       <div className={styles.description}>
-                        <span>
-                          {restaurant.type?.split(';')[0] || '暂无分类'}
-                        </span>
+                        <span>{restaurant.type?.split(';')[0] || '暂无分类'}</span>
                         <span>•</span>
-                        <span>
-                          {restaurant.rating
-                            ? `${restaurant.rating}分`
-                            : '暂无评分'}
-                        </span>
+                        <span>{restaurant.rating ? `${restaurant.rating}分` : '暂无评分'}</span>
                         {restaurant.cost && (
                           <>
                             <span>•</span>
@@ -549,23 +526,15 @@ const Home: React.FC = () => {
             <div className={styles.filterSection}>
               <h3>菜系类型</h3>
               <Space wrap>
-                {CUISINE_TYPES.map((option) => (
+                {CUISINE_TYPES.map(option => (
                   <Tag
                     key={option.value}
-                    color={
-                      tempFilterOptions.type.includes(option.value)
-                        ? 'primary'
-                        : 'default'
-                    }
+                    color={tempFilterOptions.type.includes(option.value) ? 'primary' : 'default'}
                     onClick={() => {
-                      const newTypes = tempFilterOptions.type.includes(
-                        option.value
-                      )
-                        ? tempFilterOptions.type.filter(
-                            (t) => t !== option.value
-                          )
+                      const newTypes = tempFilterOptions.type.includes(option.value)
+                        ? tempFilterOptions.type.filter(t => t !== option.value)
                         : [...tempFilterOptions.type, option.value];
-                      setTempFilterOptions((prev) => ({
+                      setTempFilterOptions(prev => ({
                         ...prev,
                         type: newTypes,
                       }));
@@ -580,15 +549,15 @@ const Home: React.FC = () => {
               <h3>价格区间</h3>
               <Radio.Group
                 value={tempFilterOptions.priceRange}
-                onChange={(value) =>
-                  setTempFilterOptions((prev) => ({
+                onChange={value =>
+                  setTempFilterOptions(prev => ({
                     ...prev,
                     priceRange: value.toString(),
                   }))
                 }
               >
                 <Space direction="vertical" block>
-                  {PRICE_RANGES.map((option) => (
+                  {PRICE_RANGES.map(option => (
                     <Radio key={option.value} value={option.value} block>
                       {option.label}
                     </Radio>
@@ -600,15 +569,15 @@ const Home: React.FC = () => {
               <h3>最低评分</h3>
               <Radio.Group
                 value={tempFilterOptions.rating}
-                onChange={(value) =>
-                  setTempFilterOptions((prev) => ({
+                onChange={value =>
+                  setTempFilterOptions(prev => ({
                     ...prev,
                     rating: value.toString(),
                   }))
                 }
               >
                 <Space direction="vertical" block>
-                  {RATING_OPTIONS.map((option) => (
+                  {RATING_OPTIONS.map(option => (
                     <Radio key={option.value} value={option.value} block>
                       {option.label}
                     </Radio>
@@ -620,15 +589,15 @@ const Home: React.FC = () => {
               <h3>排序方式</h3>
               <Radio.Group
                 value={tempFilterOptions.sortBy}
-                onChange={(value) =>
-                  setTempFilterOptions((prev) => ({
+                onChange={value =>
+                  setTempFilterOptions(prev => ({
                     ...prev,
                     sortBy: value.toString(),
                   }))
                 }
               >
                 <Space direction="vertical" block>
-                  {SORT_OPTIONS.map((option) => (
+                  {SORT_OPTIONS.map(option => (
                     <Radio key={option.value} value={option.value} block>
                       {option.label}
                     </Radio>
@@ -648,22 +617,11 @@ const Home: React.FC = () => {
         </div>
       </Popup>
       <div className={styles.footer}>
-        <Button
-          block
-          color="primary"
-          size="large"
-          onClick={handleRandomClick}
-          loading={loading}
-        >
+        <Button block color="primary" size="large" onClick={handleRandomClick} loading={loading}>
           开盲盒
         </Button>
         <div className={styles.favoriteButton}>
-          <Button
-            block
-            color="default"
-            size="large"
-            onClick={handleFavoriteClick}
-          >
+          <Button block color="default" size="large" onClick={handleFavoriteClick}>
             <Space align="center">
               <HeartOutline />
               <span>我的收藏</span>

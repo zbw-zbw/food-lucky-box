@@ -15,7 +15,7 @@
   height: 20px;
   animation: floatUp linear forwards;
   filter: drop-shadow(0 0 5px rgba(255, 105, 180, 0.5));
-  
+
   &::before,
   &::after {
     position: absolute;
@@ -58,4 +58,4 @@
     transform: translateY(-10vh) scale(0.6) rotate(0deg);
     opacity: 0;
   }
-} 
+}

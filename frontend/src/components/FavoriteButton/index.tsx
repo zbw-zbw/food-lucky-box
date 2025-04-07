@@ -40,15 +40,11 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
   }
 
   return (
-    <Button
-      block
-      className={`${styles.button} ${className || ''}`}
-      onClick={handleClick}
-    >
+    <Button block className={`${styles.button} ${className || ''}`} onClick={handleClick}>
       <HeartOutline fontSize={20} className={styles.icon} />
       我的收藏
     </Button>
   );
 };
 
-export default FavoriteButton; 
+export default FavoriteButton;

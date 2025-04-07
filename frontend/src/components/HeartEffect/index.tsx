@@ -11,16 +11,16 @@ const HeartEffect: React.FC = () => {
     const createHeart = () => {
       const heart = document.createElement('div');
       heart.className = styles.heart;
-      
+
       // 随机位置和动画
       heart.style.left = Math.random() * 100 + 'vw';
-      heart.style.animationDuration = (Math.random() * 2 + 3) + 's'; // 3-5秒
+      heart.style.animationDuration = Math.random() * 2 + 3 + 's'; // 3-5秒
       heart.style.opacity = (Math.random() * 0.3 + 0.7).toString(); // 0.7-1
-      
+
       // 随机大小
       const scale = Math.random() * 1.5 + 1; // 1-2.5倍大小
       heart.style.transform = `scale(${scale})`;
-      
+
       container.appendChild(heart);
 
       // 动画结束后移除
@@ -54,4 +54,4 @@ const HeartEffect: React.FC = () => {
   return <div ref={containerRef} className={styles.container} />;
 };
 
-export default HeartEffect; 
+export default HeartEffect;

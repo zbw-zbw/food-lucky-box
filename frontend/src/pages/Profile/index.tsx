@@ -11,13 +11,13 @@ const Profile: React.FC = () => {
         </div>
         <h2>用户名</h2>
       </div>
-      
+
       <List className={styles.menuList}>
         <List.Item>我的收藏</List.Item>
         <List.Item>历史记录</List.Item>
         <List.Item>设置</List.Item>
       </List>
-      
+
       <div className={styles.logout}>
         <Button color="danger" block>
           退出登录
@@ -27,4 +27,4 @@ const Profile: React.FC = () => {
   );
 };
 
-export default Profile; 
+export default Profile;

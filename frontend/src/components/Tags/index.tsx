@@ -20,4 +20,4 @@ const Tags: React.FC<TagsProps> = ({ tags, className }) => {
   );
 };
 
-export default Tags; 
+export default Tags;

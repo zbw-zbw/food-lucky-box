@@ -74,23 +74,27 @@ const appSlice = createSlice({
       state.loading = action.payload;
     },
     addToFavorites: (state, action: PayloadAction<Restaurant>) => {
-      if (!state.favorites.some((item) => item.id === action.payload.id)) {
+      if (!state.favorites.some(item => item.id === action.payload.id)) {
         state.favorites.push(action.payload);
         // 保存到本地存储
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({
-          favorites: state.favorites,
-        }));
+        localStorage.setItem(
+          STORAGE_KEY,
+          JSON.stringify({
+            favorites: state.favorites,
+          })
+        );
         saveState(state);
       }
     },
     removeFromFavorites: (state, action: PayloadAction<string>) => {
-      state.favorites = state.favorites.filter(
-        (item) => item.id !== action.payload
-      );
+      state.favorites = state.favorites.filter(item => item.id !== action.payload);
       // 保存到本地存储
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({
-        favorites: state.favorites,
-      }));
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({
+          favorites: state.favorites,
+        })
+      );
       saveState(state);
     },
   },
@@ -112,4 +116,4 @@ export const store = configureStore({
 });
 
 export type RootState = ReturnType<typeof store.getState>;
-export type AppDispatch = typeof store.dispatch; 
+export type AppDispatch = typeof store.dispatch;

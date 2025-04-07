@@ -19,21 +19,19 @@ const Result: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useAppDispatch();
-  const { selectedRestaurant, restaurants, loading, favorites } =
-    useAppSelector((state) => state.app);
+  const { selectedRestaurant, restaurants, loading, favorites } = useAppSelector(
+    state => state.app
+  );
   const isFromFavorite = location.state?.from === 'favorite';
 
   const isFavorite = selectedRestaurant
-    ? favorites.some((item) => item.id === selectedRestaurant.id)
+    ? favorites.some(item => item.id === selectedRestaurant.id)
     : false;
 
   const handleRandom = async () => {
     try {
       dispatch(setLoading(true));
-      const randomRestaurant = mapService.getRandomRestaurant(
-        restaurants,
-        selectedRestaurant?.id
-      );
+      const randomRestaurant = mapService.getRandomRestaurant(restaurants, selectedRestaurant?.id);
       dispatch(setSelectedRestaurant(randomRestaurant));
     } catch (error) {
       Toast.show({
@@ -67,9 +65,7 @@ const Result: React.FC = () => {
   const handleNextFavorite = () => {
     if (!selectedRestaurant || favorites.length <= 1) return;
 
-    const currentIndex = favorites.findIndex(
-      (item) => item.id === selectedRestaurant.id
-    );
+    const currentIndex = favorites.findIndex(item => item.id === selectedRestaurant.id);
     if (currentIndex === -1) return;
 
     const nextIndex = (currentIndex + 1) % favorites.length;
@@ -79,9 +75,7 @@ const Result: React.FC = () => {
   const handlePrevFavorite = () => {
     if (!selectedRestaurant || favorites.length <= 1) return;
 
-    const currentIndex = favorites.findIndex(
-      (item) => item.id === selectedRestaurant.id
-    );
+    const currentIndex = favorites.findIndex(item => item.id === selectedRestaurant.id);
     if (currentIndex === -1) return;
 
     const prevIndex = (currentIndex - 1 + favorites.length) % favorites.length;
@@ -109,14 +103,15 @@ const Result: React.FC = () => {
   }
 
   const formatDistance = (distance: number) => {
-    return distance >= 1000
-      ? `${(distance / 1000).toFixed(1)}km`
-      : `${Math.round(distance)}m`;
+    return distance >= 1000 ? `${(distance / 1000).toFixed(1)}km` : `${Math.round(distance)}m`;
   };
 
   const formatPhoneNumbers = (tel: string) => {
     // 只使用分号分隔
-    return tel.split(';').filter(Boolean).map(num => num.trim());
+    return tel
+      .split(';')
+      .filter(Boolean)
+      .map(num => num.trim());
   };
 
   const formatTypes = (type: string) => {
@@ -146,29 +141,23 @@ const Result: React.FC = () => {
                 className={styles.favoriteButton}
               />
             </div>
-            {selectedRestaurant.photos &&
-              selectedRestaurant.photos.length > 0 && (
-                <div className={styles.photos}>
-                  <Swiper
-                    autoplay
-                    loop
-                    indicator={
-                      selectedRestaurant.photos.length > 1 ? undefined : false
-                    }
-                  >
-                    {selectedRestaurant.photos.map((photo, index) => (
-                      <Swiper.Item key={index}>
-                        <div className={styles.photoItem}>
-                          <img
-                            src={photo}
-                            alt={`${selectedRestaurant.name}-${index + 1}`}
-                          />
-                        </div>
-                      </Swiper.Item>
-                    ))}
-                  </Swiper>
-                </div>
-              )}
+            {selectedRestaurant.photos && selectedRestaurant.photos.length > 0 && (
+              <div className={styles.photos}>
+                <Swiper
+                  autoplay
+                  loop
+                  indicator={selectedRestaurant.photos.length > 1 ? undefined : false}
+                >
+                  {selectedRestaurant.photos.map((photo, index) => (
+                    <Swiper.Item key={index}>
+                      <div className={styles.photoItem}>
+                        <img src={photo} alt={`${selectedRestaurant.name}-${index + 1}`} />
+                      </div>
+                    </Swiper.Item>
+                  ))}
+                </Swiper>
+              </div>
+            )}
             <div className={styles.details}>
               <div className={styles.row}>
                 <span className={styles.label}>评分</span>
@@ -176,25 +165,15 @@ const Result: React.FC = () => {
               </div>
               <div className={styles.row}>
                 <span className={styles.label}>类型</span>
-                <Tags
-                  tags={
-                    selectedRestaurant.type
-                      ? formatTypes(selectedRestaurant.type)
-                      : []
-                  }
-                />
+                <Tags tags={selectedRestaurant.type ? formatTypes(selectedRestaurant.type) : []} />
               </div>
               <div className={styles.row}>
                 <span className={styles.label}>距离</span>
-                <span className={styles.value}>
-                  {formatDistance(selectedRestaurant.distance)}
-                </span>
+                <span className={styles.value}>{formatDistance(selectedRestaurant.distance)}</span>
               </div>
               <div className={styles.row}>
                 <span className={styles.label}>地址</span>
-                <span className={styles.value}>
-                  {selectedRestaurant.address}
-                </span>
+                <span className={styles.value}>{selectedRestaurant.address}</span>
               </div>
               {selectedRestaurant.tel && (
                 <div className={styles.row}>
@@ -212,30 +191,17 @@ const Result: React.FC = () => {
           {isFromFavorite ? (
             favorites.length > 1 && (
               <div className={styles.favoriteActions}>
-                <Button
-                  color="primary"
-                  onClick={handlePrevFavorite}
-                  className={styles.prevButton}
-                >
+                <Button color="primary" onClick={handlePrevFavorite} className={styles.prevButton}>
                   上一家
                 </Button>
-                <Button
-                  color="primary"
-                  onClick={handleNextFavorite}
-                  className={styles.nextButton}
-                >
+                <Button color="primary" onClick={handleNextFavorite} className={styles.nextButton}>
                   下一家
                 </Button>
               </div>
             )
           ) : (
             <>
-              <Button
-                color="primary"
-                block
-                loading={loading}
-                onClick={handleRandom}
-              >
+              <Button color="primary" block loading={loading} onClick={handleRandom}>
                 换一家
               </Button>
               <FavoriteButton />

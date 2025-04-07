@@ -3,21 +3,24 @@ import Home from '../pages/Home';
 import Result from '../pages/Result';
 import Favorite from '../pages/Favorite';
 
-const router = createBrowserRouter([
+const router = createBrowserRouter(
+  [
+    {
+      path: '/',
+      element: <Home />,
+    },
+    {
+      path: '/result',
+      element: <Result />,
+    },
+    {
+      path: '/favorite',
+      element: <Favorite />,
+    },
+  ],
   {
-    path: '/',
-    element: <Home />,
-  },
-  {
-    path: '/result',
-    element: <Result />,
-  },
-  {
-    path: '/favorite',
-    element: <Favorite />,
-  },
-], {
-  basename: '/food-lucky-box'
-});
+    basename: '/food-lucky-box',
+  }
+);
 
-export default router; 
+export default router;

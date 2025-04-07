@@ -10,13 +10,7 @@ interface ImageProps {
   height?: number | string;
 }
 
-const Image: React.FC<ImageProps> = ({
-  src,
-  alt = '',
-  className = '',
-  width,
-  height,
-}) => {
+const Image: React.FC<ImageProps> = ({ src, alt = '', className = '', width, height }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
@@ -30,13 +24,8 @@ const Image: React.FC<ImageProps> = ({
   };
 
   return (
-    <div
-      className={`${styles.imageWrapper} ${className}`}
-      style={{ width, height }}
-    >
-      {loading && (
-        <Skeleton animated className={styles.skeleton} />
-      )}
+    <div className={`${styles.imageWrapper} ${className}`} style={{ width, height }}>
+      {loading && <Skeleton animated className={styles.skeleton} />}
       {error ? (
         <div className={styles.placeholder}>
           <svg viewBox="0 0 24 24" fill="currentColor">
@@ -56,4 +45,4 @@ const Image: React.FC<ImageProps> = ({
   );
 };
 
-export default Image; 
+export default Image;

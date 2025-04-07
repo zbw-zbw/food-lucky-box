@@ -26,11 +26,23 @@ module.exports = {
     'react/prop-types': 'off',
     '@typescript-eslint/explicit-module-boundary-types': 'off',
     '@typescript-eslint/no-explicit-any': 'warn',
-    'prettier/prettier': 'error',
+    'prettier/prettier': [
+      'error',
+      {
+        singleQuote: true,
+        semi: true,
+        tabWidth: 2,
+        trailingComma: 'es5',
+        printWidth: 100,
+        bracketSpacing: true,
+        arrowParens: 'avoid',
+        endOfLine: 'auto',
+      },
+    ],
   },
   settings: {
     react: {
       version: 'detect',
     },
   },
-}; 
+};

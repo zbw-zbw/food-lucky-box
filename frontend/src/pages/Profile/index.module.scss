@@ -8,21 +8,21 @@
   padding: 30px 20px;
   text-align: center;
   margin-bottom: 20px;
-  
+
   .avatar {
     width: 80px;
     height: 80px;
     margin: 0 auto 15px;
     border-radius: 50%;
     overflow: hidden;
-    
+
     img {
       width: 100%;
       height: 100%;
       object-fit: cover;
     }
   }
-  
+
   h2 {
     font-size: 18px;
     color: #333;
@@ -32,7 +32,7 @@
 .menuList {
   background-color: #fff;
   margin-bottom: 20px;
-  
+
   :global {
     .adm-list-item {
       padding: 15px 20px;
@@ -42,7 +42,7 @@
 
 .logout {
   padding: 20px;
-  
+
   :global {
     .adm-button {
       height: 44px;
@@ -50,4 +50,4 @@
       border-radius: 22px;
     }
   }
-} 
+}
