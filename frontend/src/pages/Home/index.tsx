@@ -21,9 +21,6 @@ import { Restaurant, Location as MapLocation } from '../../utils/map';
 import styles from './index.module.scss';
 import Image from '../../components/Image';
 import { debounce } from 'lodash';
-import lyxzbw1 from '../../assets/lyxzbw1.jpg';
-import lyxzbw2 from '../../assets/lyxzbw2.jpg';
-import lyxzbw3 from '../../assets/lyxzbw3.jpg';
 
 interface FilterOptions {
   type: string[];
@@ -151,33 +148,7 @@ const Home: React.FC = () => {
   const filteredRestaurants = useMemo(() => {
     let result = [...allRestaurants];
 
-    // 彩蛋功能
-    if (searchText.trim() === '李语馨') {
-      if (!showHeartEffect) {
-        setShowHeartEffect(true);
-        // 10秒后关闭动效
-        setTimeout(() => {
-          setShowHeartEffect(false);
-        }, 10000);
-      }
-      return [
-        {
-          id: 'easter_egg',
-          name: '张宝文',
-          address: '❤️',
-          location: {
-            latitude: 0,
-            longitude: 0,
-            address: '❤️',
-          },
-          rating: 5,
-          distance: 0,
-          photos: [lyxzbw1, lyxzbw2, lyxzbw3],
-          type: '最爱',
-          tel: '',
-        },
-      ];
-    } else if (showHeartEffect) {
+    if (showHeartEffect) {
       setShowHeartEffect(false);
     }
 
